@@ -1,0 +1,66 @@
+version: "3.5"
+
+services:
+  api01: &api
+    build: .
+    hostname: api01
+    environment:
+      - API_PORT=8081
+    networks:
+      - networkNames
+    depends_on:
+      - db
+    deploy:
+      resources:
+        limits:
+          cpus: "0.22"
+          memory: "30MB"
+
+  api02:
+    <<: *api 
+    hostname: api02
+    environment:
+      - API_PORT=8082
+    networks:
+      - networkNames
+ 
+  nginx:
+    image: nginx:latest
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - api01
+      - api02
+    ports:
+      - "9999:9999"
+    networks:
+      - networkNames
+    deploy:
+      resources:
+        limits:
+          cpus: "0.26"
+          memory: "20MB"
+
+  db:
+    image: mysql:8.0
+    container_name: mysql-api
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: api
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - networkNames
+    deploy:
+      resources:
+        limits:
+          cpus: "1.00"
+          memory: "470MB"
+
+volumes:
+  mysql_data:
+
+networks:
+  networkNames:
+    driver: bridge
