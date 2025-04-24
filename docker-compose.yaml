@@ -14,7 +14,7 @@ services:
       resources:
         limits:
           cpus: "0.22"
-          memory: "30MB"
+          memory: "29MB"
 
   api02:
     <<: *api 
@@ -39,7 +39,7 @@ services:
       resources:
         limits:
           cpus: "0.26"
-          memory: "20MB"
+          memory: "22MB"
 
   db:
     image: mysql:8.0
