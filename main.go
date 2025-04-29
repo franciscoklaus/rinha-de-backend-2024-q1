@@ -15,6 +15,8 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/mux"
+	ddtracer "gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
+	ddmux "gopkg.in/DataDog/dd-trace-go.v1/contrib/gorilla/mux"
 )
 
 type Statement struct {
@@ -48,6 +50,9 @@ type TransactionSuccessResponse struct {
 
 // Constantes para evitar números mágicos e melhorar legibilidade
 var serverPort = os.Getenv("API_PORT")
+var agentHost = os.Getenv("DD_AGENT_HOST")
+var agentPort = os.Getenv("DD_TRACE_AGENT_PORT")
+var serviceName = os.Getenv("DD_SERVICE")
 
 const (
 	maxDBIdleConns    = 5
@@ -413,6 +418,14 @@ func criarTransacao(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	
+	// Inicia o tracer do Datadog
+	ddtracer.Start(
+		ddtracer.WithAgentAddr(agentHost + ":" + agentPort),
+		ddtracer.WithServiceName(serviceName),
+	)
+	defer ddtracer.Stop()
+
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 
 	// Configuração do banco de dados
@@ -427,7 +440,7 @@ func main() {
 
 	db.Close()
 	// Configuração do router
-	r := mux.NewRouter()
+	r := ddmux.NewRouter()
 	r.HandleFunc("/clientes/{id}/transacoes", criarTransacao).Methods(http.MethodPost)
 	r.HandleFunc("/clientes/{id}/extrato", criarExtrato).Methods(http.MethodGet)
 

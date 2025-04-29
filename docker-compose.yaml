@@ -6,6 +6,9 @@ services:
     hostname: api01
     environment:
       - API_PORT=8081
+      - DD_AGENT_HOST=datadog-agent
+      - DD_TRACE_AGENT_PORT=8126
+      - DD_SERVICE=api1
     networks:
       - networkNames
     depends_on:
@@ -21,6 +24,9 @@ services:
     hostname: api02
     environment:
       - API_PORT=8082
+      - DD_AGENT_HOST=datadog-agent
+      - DD_TRACE_AGENT_PORT=8126
+      - DD_SERVICE=api2
     networks:
       - networkNames
  
@@ -57,6 +63,31 @@ services:
         limits:
           cpus: "1.00"
           memory: "470MB"
+
+
+  datadog:
+    image: gcr.io/datadoghq/agent:latest
+    container_name: datadog-agent
+    environment:
+      - DD_API_KEY=5989fd4e6d9494051a29baaca069daf0
+      - DD_SITE=datadoghq.com
+      - DD_APM_ENABLED=true
+      - DD_LOGS_ENABLED=true
+      - DD_DOGSTATSD_NON_LOCAL_TRAFFIC=true
+      - DD_HOSTNAME=datadog-agent
+    ports:
+      - "8126:8126"  # Porta APM
+    networks:
+      - networkNames
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro  # Para coletar métricas de containers
+    deploy:
+      resources:
+        limits:
+          cpus: "0.30"
+          memory: "200MB"
+
+
 
 volumes:
   mysql_data:
